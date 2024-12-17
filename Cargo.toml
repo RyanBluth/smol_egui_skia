@@ -14,16 +14,17 @@ cpu_fix = []
 opt-level = 3
 
 [dependencies]
-egui = "0.29"
+egui = "0.30"
 skia-safe = { version = "0.75", features = [] }
 
 [dev-dependencies]
 softbuffer = "0.4.5"
-egui_demo_lib = "0.29"
+egui_demo_lib = "0.30"
 raw-window-handle = "0.5"
 foreign-types-shared = "0.1.1"
-egui_extras = { version = "0.29", features = ["all_loaders"] }
-image = { version = "0.25.1", features = ["png", "jpeg"] }
+egui_extras = { version = "0.30", features = ["all_loaders"] }
+image = { version = "0.25.5", features = ["png", "jpeg"] }
+profiling = { version = "1.0.16", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
 metal = "0.24"

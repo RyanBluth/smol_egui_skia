@@ -1,5 +1,5 @@
 use skia_safe::{EncodedImageFormat, Paint, Point};
-use smol_egui_skia::{rasterize, RasterizeOptions};
+use smol_egui_skia::{rasterize, EguiSkiaPaintCallback, RasterizeOptions};
 use std::fs::File;
 use std::io::Write;
 
@@ -17,7 +17,7 @@ pub fn main() {
                         ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
                     ui.painter().add(egui::PaintCallback {
                         rect,
-                        callback: std::sync::Arc::new(egui_skia::EguiSkiaPaintCallback::new(
+                        callback: std::sync::Arc::new(EguiSkiaPaintCallback::new(
                             move |canvas| {
                                 canvas.draw_circle(
                                     Point::new(150.0, 150.0),
