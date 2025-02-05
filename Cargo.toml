@@ -14,15 +14,15 @@ cpu_fix = []
 opt-level = 3
 
 [dependencies]
-egui = "0.30"
+egui = "0.31"
 skia-safe = { version = "0.75", features = [] }
 
 [dev-dependencies]
 softbuffer = "0.4.5"
-egui_demo_lib = "0.30"
+egui_demo_lib = "0.31"
 raw-window-handle = "0.5"
 foreign-types-shared = "0.1.1"
-egui_extras = { version = "0.30", features = ["all_loaders"] }
+egui_extras = { version = "0.31", features = ["all_loaders"] }
 image = { version = "0.25.5", features = ["png", "jpeg"] }
 profiling = { version = "1.0.16", default-features = false }
 
