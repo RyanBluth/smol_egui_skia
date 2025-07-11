@@ -1,30 +1,29 @@
 [package]
 name = "smol_egui_skia"
-version = "0.2.0"
-edition = "2021"
+version = "0.3.0"
+edition = "2024"
 description = "smol_egui_skia is a skia integration for the egui ui library. It differs from the egui_skia library in that it is NOT intended to allow you to create _ui applications_ that render egui UIs with skia, rather just render images using egui as layout engine."
 license = "MIT"
 repository = "https://github.com/lily-mara/smol_egui_skia"
 keywords = ["skia", "egui", "skia-safe"]
 
-[features]
-cpu_fix = []
+
 
 [profile.dev]
 opt-level = 3
 
 [dependencies]
-egui = "0.31"
-skia-safe = { version = "0.75", features = [] }
+egui = "0.32"
+skia-safe = { version = "0.87", features = [] }
 
 [dev-dependencies]
-softbuffer = "0.4.5"
-egui_demo_lib = "0.31"
-raw-window-handle = "0.5"
-foreign-types-shared = "0.1.1"
-egui_extras = { version = "0.31", features = ["all_loaders"] }
-image = { version = "0.25.5", features = ["png", "jpeg"] }
-profiling = { version = "1.0.16", default-features = false }
+softbuffer = "0.4.6"
+egui_demo_lib = "0.32"
+raw-window-handle = "0.6.2"
+foreign-types-shared = "0.3.1"
+egui_extras = { version = "0.32", features = ["all_loaders"] }
+image = { version = "0.25.6", features = ["png", "jpeg"] }
+profiling = { version = "1.0.17", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
 metal = "0.24"

@@ -1,6 +1,7 @@
-use egui::{include_image, CentralPanel};
+use egui::load::TexturePoll;
+use egui::{CentralPanel, SizeHint, TextureOptions, include_image};
 use skia_safe::EncodedImageFormat;
-use smol_egui_skia::{rasterize, RasterizeOptions};
+use smol_egui_skia::{RasterizeOptions, rasterize};
 use std::fs::File;
 use std::io::Write;
 
@@ -9,6 +10,14 @@ pub fn main() {
         (460, 307),
         |ctx| {
             egui_extras::install_image_loaders(&ctx);
+
+            while !matches!(
+                include_image!("assets/ferris.jpg").load(ctx, TextureOptions::default(), SizeHint::default()),
+                Ok(TexturePoll::Ready { .. })
+            ) {
+                continue;
+            }
+
             CentralPanel::default().show(&ctx, |ui| {
                 ui.image(include_image!("assets/ferris.jpg"));
             });
