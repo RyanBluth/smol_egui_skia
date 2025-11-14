@@ -266,7 +266,7 @@ impl EguiSkiaPaintCallback {
         EguiSkiaPaintCallback {
             callback: Box::new(move |rect| {
                 let mut pr = PictureRecorder::new();
-                let canvas = pr.begin_recording(rect, None);
+                let canvas = pr.begin_recording(rect, false);
                 callback(canvas);
                 SyncSendableDrawable(
                     pr.finish_recording_as_drawable()

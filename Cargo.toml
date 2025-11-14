@@ -8,25 +8,24 @@ repository = "https://github.com/lily-mara/smol_egui_skia"
 keywords = ["skia", "egui", "skia-safe"]
 
 
-
 [profile.dev]
 opt-level = 3
 
 [dependencies]
-egui = "0.32.3"
-skia-safe = { version = "0.87", features = [] }
+egui = "0.33.2"
+skia-safe = { version = "0.90", features = [] }
 
 [dev-dependencies]
 softbuffer = "0.4.6"
-egui_demo_lib = "0.32"
+egui_demo_lib = "0.33.2"
 raw-window-handle = "0.6.2"
 foreign-types-shared = "0.3.1"
-egui_extras = { version = "0.32", features = ["all_loaders"] }
+egui_extras = { version = "0.33.2", features = ["all_loaders"] }
 image = { version = "0.25.6", features = ["png", "jpeg"] }
 profiling = { version = "1.0.17", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
-metal = "0.24"
-cocoa = "0.24"
-core-graphics-types = "0.1"
+metal = "0.32.0"
+cocoa = "0.26.1"
+core-graphics-types = "0.2.0"
 objc = "0.2"
