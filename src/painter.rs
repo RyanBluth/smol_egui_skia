@@ -28,6 +28,22 @@ impl Painter {
         }
     }
 
+    /// Check if all textures referenced in the primitives are loaded
+    pub fn all_textures_loaded(&self, primitives: &[ClippedPrimitive]) -> bool {
+        primitives.iter().all(|primitive| {
+            match &primitive.primitive {
+                Primitive::Mesh(mesh) => {
+                    // Check if the texture for this mesh is loaded
+                    // We need to clone because split_to_u16() consumes the mesh
+                    mesh.clone().split_to_u16().iter().all(|m| {
+                        self.paints.contains_key(&m.texture_id)
+                    })
+                }
+                Primitive::Callback(_) => true, // Callbacks don't use textures from the map
+            }
+        })
+    }
+
     pub fn paint_and_update_textures(
         &mut self,
         canvas: &Canvas,
