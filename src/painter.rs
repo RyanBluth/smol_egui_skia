@@ -234,8 +234,10 @@ impl Painter {
 
                         arc.clip_rect(skclip_rect, ClipOp::default(), true);
 
-                        let paint = &self.paints[&texture_id].paint;
-                        arc.draw_vertices(&vertices, BlendMode::Modulate, paint);
+                        // Only render if the texture has been loaded
+                        if let Some(paint_handle) = self.paints.get(&texture_id) {
+                            arc.draw_vertices(&vertices, BlendMode::Modulate, &paint_handle.paint);
+                        }
                     }
                 }
                 Primitive::Callback(data) => {
