@@ -43,7 +43,7 @@ impl Painter {
                             color_image.width() as i32,
                             color_image.height() as i32,
                         ),
-                        skia_safe::ColorType::RGB888x,
+                        skia_safe::ColorType::RGBA8888,
                         skia_safe::AlphaType::Premul,
                         None,
                     ),
