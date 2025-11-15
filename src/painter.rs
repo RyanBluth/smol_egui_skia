@@ -44,6 +44,11 @@ impl Painter {
         })
     }
 
+    /// Check if a specific texture ID is loaded
+    pub fn has_texture(&self, texture_id: &TextureId) -> bool {
+        self.paints.contains_key(texture_id)
+    }
+
     pub fn paint_and_update_textures(
         &mut self,
         canvas: &Canvas,
@@ -234,8 +239,10 @@ impl Painter {
 
                         arc.clip_rect(skclip_rect, ClipOp::default(), true);
 
-                        let paint = &self.paints[&texture_id].paint;
-                        arc.draw_vertices(&vertices, BlendMode::Modulate, paint);
+                        // Only render if the texture has been loaded
+                        if let Some(paint_handle) = self.paints.get(&texture_id) {
+                            arc.draw_vertices(&vertices, BlendMode::Modulate, &paint_handle.paint);
+                        }
                     }
                 }
                 Primitive::Callback(data) => {

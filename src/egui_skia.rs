@@ -119,12 +119,26 @@ impl EguiSkia {
     /// Check if all textures required for rendering are currently loaded.
     ///
     /// This checks if all textures referenced in the current shapes/primitives
-    /// are available in the painter's texture cache.
+    /// are available in the painter's texture cache OR in the pending texture delta.
     ///
     /// Returns `true` if all textures are ready, `false` if any are missing.
     pub fn are_textures_loaded(&self) -> bool {
         let clipped_primitives = self.egui_ctx.tessellate(self.shapes.clone(), self.pixels_per_point);
-        self.painter.all_textures_loaded(&clipped_primitives)
+
+        // Check if all textures are either already loaded or in the pending delta
+        clipped_primitives.iter().all(|primitive| {
+            match &primitive.primitive {
+                egui::epaint::Primitive::Mesh(mesh) => {
+                    mesh.clone().split_to_u16().iter().all(|m| {
+                        let texture_id = m.texture_id;
+                        // Check if texture is already in painter OR in pending delta
+                        self.painter.has_texture(&texture_id) ||
+                        self.textures_delta.set.iter().any(|(id, _)| id == &texture_id)
+                    })
+                }
+                egui::epaint::Primitive::Callback(_) => true,
+            }
+        })
     }
 
     /// Wait for all textures to load by running the UI repeatedly until ready.
