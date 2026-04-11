@@ -12,20 +12,20 @@ keywords = ["skia", "egui", "skia-safe"]
 opt-level = 3
 
 [dependencies]
-egui = "0.33.2"
-skia-safe = { version = "0.90", features = [] }
+egui = "0.34.1"
+skia-safe = { version = "0.93", features = [] }
 
 [dev-dependencies]
-softbuffer = "0.4.6"
-egui_demo_lib = "0.33.2"
+softbuffer = "0.4.8"
+egui_demo_lib = "0.34.1"
 raw-window-handle = "0.6.2"
 foreign-types-shared = "0.3.1"
-egui_extras = { version = "0.33.2", features = ["all_loaders"] }
-image = { version = "0.25.6", features = ["png", "jpeg"] }
+egui_extras = { version = "0.34.1", features = ["all_loaders"] }
+image = { version = "0.25.10", features = ["png", "jpeg"] }
 profiling = { version = "1.0.17", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
-metal = "0.32.0"
+metal = "0.33.0"
 cocoa = "0.26.1"
 core-graphics-types = "0.2.0"
 objc = "0.2"
