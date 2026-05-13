@@ -1,31 +1,25 @@
 use skia_safe::{EncodedImageFormat, Paint, Point};
-use smol_egui_skia::{rasterize, EguiSkiaPaintCallback, RasterizeOptions};
+use smol_egui_skia::{EguiSkiaPaintCallback, RasterizeOptions, rasterize_ui};
 use std::fs::File;
 use std::io::Write;
 
 pub fn main() {
     let mut demo = egui_demo_lib::DemoWindows::default();
 
-    let mut surface = rasterize(
+    let mut surface = rasterize_ui(
         (1024, 756),
-        |ctx| {
-            demo.ui(ctx);
+        |ui| {
+            demo.ui(ui);
 
-            egui::Window::new("Draw to skia").show(ctx, |ui| {
+            egui::Window::new("Draw to skia").show(ui.ctx(), |ui| {
                 egui::ScrollArea::horizontal().show(ui, |ui| {
                     let (rect, _) =
                         ui.allocate_exact_size(egui::Vec2::splat(300.0), egui::Sense::drag());
                     ui.painter().add(egui::PaintCallback {
                         rect,
-                        callback: std::sync::Arc::new(EguiSkiaPaintCallback::new(
-                            move |canvas| {
-                                canvas.draw_circle(
-                                    Point::new(150.0, 150.0),
-                                    150.0,
-                                    &Paint::default(),
-                                );
-                            },
-                        )),
+                        callback: std::sync::Arc::new(EguiSkiaPaintCallback::new(move |canvas| {
+                            canvas.draw_circle(Point::new(150.0, 150.0), 150.0, &Paint::default());
+                        })),
                     })
                 });
             });
@@ -38,7 +32,7 @@ pub fn main() {
 
     let data = surface
         .image_snapshot()
-        .encode_to_data(EncodedImageFormat::PNG)
+        .encode(None, EncodedImageFormat::PNG, 100)
         .expect("Failed to encode image");
 
     File::create("output.png")

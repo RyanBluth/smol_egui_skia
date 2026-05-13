@@ -1,26 +1,29 @@
 use egui::load::TexturePoll;
-use egui::{CentralPanel, SizeHint, TextureOptions, include_image};
+use egui::{SizeHint, TextureOptions, include_image};
 use skia_safe::EncodedImageFormat;
-use smol_egui_skia::{RasterizeOptions, rasterize};
+use smol_egui_skia::{RasterizeOptions, rasterize_ui};
 use std::fs::File;
 use std::io::Write;
 
 pub fn main() {
-    let mut surface = rasterize(
+    let mut surface = rasterize_ui(
         (460, 307),
-        |ctx| {
-            egui_extras::install_image_loaders(&ctx);
+        |ui| {
+            let ctx = ui.ctx();
+            egui_extras::install_image_loaders(ctx);
 
             while !matches!(
-                include_image!("assets/ferris.jpg").load(ctx, TextureOptions::default(), SizeHint::default()),
+                include_image!("assets/ferris.jpg").load(
+                    ctx,
+                    TextureOptions::default(),
+                    SizeHint::default()
+                ),
                 Ok(TexturePoll::Ready { .. })
             ) {
                 continue;
             }
 
-            CentralPanel::default().show(&ctx, |ui| {
-                ui.image(include_image!("assets/ferris.jpg"));
-            });
+            ui.image(include_image!("assets/ferris.jpg"));
         },
         Some(RasterizeOptions {
             pixels_per_point: 1.0,
@@ -30,7 +33,7 @@ pub fn main() {
 
     let data = surface
         .image_snapshot()
-        .encode_to_data(EncodedImageFormat::PNG)
+        .encode(None, EncodedImageFormat::PNG, 100)
         .expect("Failed to encode image");
 
     File::create("output.png")

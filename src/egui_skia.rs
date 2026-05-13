@@ -1,5 +1,5 @@
-use egui::{Context, Pos2};
-use skia_safe::{surface::surfaces::raster_n32_premul, Canvas, Surface};
+use egui::{Context, Pos2, Ui};
+use skia_safe::{Canvas, Surface, surface::surfaces::raster_n32_premul};
 
 use crate::painter::Painter;
 
@@ -24,14 +24,31 @@ pub fn rasterize(
     ui: impl FnMut(&Context),
     options: Option<RasterizeOptions>,
 ) -> Surface {
+    let mut ui = ui;
+    rasterize_ui(size, |root_ui| ui(root_ui.ctx()), options)
+}
+
+pub fn rasterize_ui(
+    size: (i32, i32),
+    ui: impl FnMut(&mut Ui),
+    options: Option<RasterizeOptions>,
+) -> Surface {
     let mut surface = raster_n32_premul(size).expect("Failed to create surface");
-    draw_onto_canvas(surface.canvas(), ui, options);
+    draw_onto_canvas_ui(surface.canvas(), ui, options);
     surface
 }
 
 pub fn draw_onto_canvas(
     canvas: &Canvas,
     mut ui: impl FnMut(&Context),
+    options: Option<RasterizeOptions>,
+) {
+    draw_onto_canvas_ui(canvas, |root_ui| ui(root_ui.ctx()), options);
+}
+
+pub fn draw_onto_canvas_ui(
+    canvas: &Canvas,
+    mut ui: impl FnMut(&mut Ui),
     options: Option<RasterizeOptions>,
 ) {
     let RasterizeOptions {
@@ -54,7 +71,7 @@ pub fn draw_onto_canvas(
     };
 
     for _ in 0..frames_before_screenshot {
-        backend.run(input.clone(), &mut ui);
+        backend.run_ui(input.clone(), &mut ui);
     }
     backend.paint(canvas);
 }
@@ -88,14 +105,25 @@ impl EguiSkia {
     pub fn run(
         &mut self,
         input: egui::RawInput,
-        run_ui: impl FnMut(&Context),
+        mut run_ui: impl FnMut(&Context),
+    ) -> egui::PlatformOutput {
+        self.run_ui(input, |ui| run_ui(ui.ctx()))
+    }
+
+    /// Returns a duration after witch egui should repaint.
+    ///
+    /// Call [`Self::paint`] later to paint.
+    pub fn run_ui(
+        &mut self,
+        input: egui::RawInput,
+        run_ui: impl FnMut(&mut Ui),
     ) -> egui::PlatformOutput {
         let egui::FullOutput {
             platform_output,
             textures_delta,
             shapes,
             ..
-        } = self.egui_ctx.run(input, run_ui);
+        } = self.egui_ctx.run_ui(input, run_ui);
 
         self.shapes = shapes;
         self.textures_delta.append(textures_delta);
@@ -123,7 +151,9 @@ impl EguiSkia {
     ///
     /// Returns `true` if all textures are ready, `false` if any are missing.
     pub fn are_textures_loaded(&self) -> bool {
-        let clipped_primitives = self.egui_ctx.tessellate(self.shapes.clone(), self.pixels_per_point);
+        let clipped_primitives = self
+            .egui_ctx
+            .tessellate(self.shapes.clone(), self.pixels_per_point);
 
         // Check if all textures are either already loaded or in the pending delta
         clipped_primitives.iter().all(|primitive| {
@@ -132,8 +162,12 @@ impl EguiSkia {
                     mesh.clone().split_to_u16().iter().all(|m| {
                         let texture_id = m.texture_id;
                         // Check if texture is already in painter OR in pending delta
-                        self.painter.has_texture(&texture_id) ||
-                        self.textures_delta.set.iter().any(|(id, _)| id == &texture_id)
+                        self.painter.has_texture(&texture_id)
+                            || self
+                                .textures_delta
+                                .set
+                                .iter()
+                                .any(|(id, _)| id == &texture_id)
                     })
                 }
                 egui::epaint::Primitive::Callback(_) => true,
@@ -166,8 +200,8 @@ impl EguiSkia {
     ///
     /// // Wait for textures to load
     /// backend.wait_for_textures(input.clone(), |ctx| {
-    ///     egui::CentralPanel::default().show(ctx, |ui| {
-    ///         ui.image(egui::include_image!("../assets/ferris.jpg"));
+    ///     egui::Window::new("Image").show(ctx, |ui| {
+    ///         ui.image(egui::include_image!("../examples/assets/ferris.jpg"));
     ///     });
     /// }, Some(100));
     /// ```
