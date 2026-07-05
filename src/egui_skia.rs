@@ -227,6 +227,27 @@ impl EguiSkia {
         false // Timed out
     }
 
+    pub fn wait_for_textures_ui(
+        &mut self,
+        input: egui::RawInput,
+        mut run_ui: impl FnMut(&mut Ui),
+        max_iterations: Option<usize>,
+    ) -> bool {
+        let max_iterations = max_iterations.unwrap_or(100);
+
+        for _ in 0..max_iterations {
+            self.run_ui(input.clone(), &mut run_ui);
+
+            if self.are_textures_loaded() {
+                return true;
+            }
+
+            self.egui_ctx.request_repaint();
+        }
+
+        false
+    }
+
     /// Paint only after waiting for all textures to load.
     ///
     /// This is a convenience method that combines `wait_for_textures` and `paint`.
@@ -248,6 +269,21 @@ impl EguiSkia {
         max_iterations: Option<usize>,
     ) -> bool {
         if self.wait_for_textures(input, run_ui, max_iterations) {
+            self.paint(canvas);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn paint_when_ready_ui(
+        &mut self,
+        canvas: &Canvas,
+        input: egui::RawInput,
+        run_ui: impl FnMut(&mut Ui),
+        max_iterations: Option<usize>,
+    ) -> bool {
+        if self.wait_for_textures_ui(input, run_ui, max_iterations) {
             self.paint(canvas);
             true
         } else {

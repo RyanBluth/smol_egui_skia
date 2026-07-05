@@ -1,7 +1,7 @@
 use std::ops::Deref;
 use std::sync::Arc;
 
-use egui::epaint::ahash::AHashMap;
+use ahash::AHashMap;
 
 use egui::epaint::Primitive;
 use egui::{ClippedPrimitive, ImageData, Pos2, TextureId, TexturesDelta};
@@ -305,5 +305,4 @@ impl EguiSkiaPaintCallback {
 struct SyncSendableDrawable(pub Sendable<Drawable>);
 
 unsafe impl Sync for SyncSendableDrawable {}
-
 
