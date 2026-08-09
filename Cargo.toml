@@ -13,15 +13,15 @@ opt-level = 3
 
 [dependencies]
 ahash = "0.8.12"
-egui = "0.35.0"
+egui = "0.36.1"
 skia-safe = { version = "0.97", features = [] }
 
 [dev-dependencies]
 softbuffer = "0.4.8"
-egui_demo_lib = "0.35.0"
+egui_demo_lib = "0.36.1"
 raw-window-handle = "0.6.2"
 foreign-types-shared = "0.3.1"
-egui_extras = { version = "0.35.0", features = ["all_loaders"] }
+egui_extras = { version = "0.36.1", features = ["all_loaders"] }
 image = { version = "0.25.10", features = ["png", "jpeg"] }
 profiling = { version = "1.0.18", default-features = false }
 

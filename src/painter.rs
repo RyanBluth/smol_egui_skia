@@ -8,8 +8,8 @@ use egui::{ClippedPrimitive, ImageData, Pos2, TextureId, TexturesDelta};
 use skia_safe::surfaces::raster_n32_premul;
 use skia_safe::vertices::VertexMode;
 use skia_safe::{
-    scalar, BlendMode, Canvas, ClipOp, Color, ConditionallySend, Data, Drawable, Image, ImageInfo,
-    Paint, PictureRecorder, Point, Rect, Sendable, Vertices,
+    BlendMode, Canvas, ClipOp, Color, ConditionallySend, Data, Drawable, Image, ImageInfo, Paint,
+    PictureRecorder, Point, Rect, Sendable, Vertices, scalar,
 };
 
 struct PaintHandle {
@@ -35,9 +35,10 @@ impl Painter {
                 Primitive::Mesh(mesh) => {
                     // Check if the texture for this mesh is loaded
                     // We need to clone because split_to_u16() consumes the mesh
-                    mesh.clone().split_to_u16().iter().all(|m| {
-                        self.paints.contains_key(&m.texture_id)
-                    })
+                    mesh.clone()
+                        .split_to_u16()
+                        .iter()
+                        .all(|m| self.paints.contains_key(&m.texture_id))
                 }
                 Primitive::Callback(_) => true, // Callbacks don't use textures from the map
             }
@@ -54,102 +55,104 @@ impl Painter {
         canvas: &Canvas,
         dpi: f32,
         primitives: Vec<ClippedPrimitive>,
-        textures_delta: TexturesDelta,
+        mut textures_delta: TexturesDelta,
     ) {
-        textures_delta.set.iter().for_each(|(id, image_delta)| {
-            let delta_image = match &image_delta.image {
-                ImageData::Color(color_image) => skia_safe::images::raster_from_data(
-                    &ImageInfo::new(
-                        skia_safe::ISize::new(
-                            color_image.width() as i32,
-                            color_image.height() as i32,
+        for (id, image_deltas) in &textures_delta.set {
+            for image_delta in image_deltas {
+                let delta_image = match &image_delta.image {
+                    ImageData::Color(color_image) => skia_safe::images::raster_from_data(
+                        &ImageInfo::new(
+                            skia_safe::ISize::new(
+                                color_image.width() as i32,
+                                color_image.height() as i32,
+                            ),
+                            skia_safe::ColorType::RGBA8888,
+                            skia_safe::AlphaType::Premul,
+                            None,
                         ),
-                        skia_safe::ColorType::RGBA8888,
-                        skia_safe::AlphaType::Premul,
-                        None,
-                    ),
-                    Data::new_copy(
-                        color_image
-                            .pixels
-                            .iter()
-                            .flat_map(|p| p.to_array())
-                            .collect::<Vec<_>>()
-                            .as_slice(),
-                    ),
-                    color_image.width() * 4,
-                )
-                .unwrap(),
-            };
+                        Data::new_copy(
+                            color_image
+                                .pixels
+                                .iter()
+                                .flat_map(|p| p.to_array())
+                                .collect::<Vec<_>>()
+                                .as_slice(),
+                        ),
+                        color_image.width() * 4,
+                    )
+                    .unwrap(),
+                };
 
-            let image = match image_delta.pos {
-                None => delta_image,
-                Some(pos) => {
-                    let old_image = self.paints.remove(id).unwrap().image;
+                let image = match image_delta.pos {
+                    None => delta_image,
+                    Some(pos) => {
+                        let old_image = self.paints.remove(id).unwrap().image;
 
-                    let mut surface = raster_n32_premul(skia_safe::ISize::new(
-                        old_image.width(),
-                        old_image.height(),
-                    ))
+                        let mut surface = raster_n32_premul(skia_safe::ISize::new(
+                            old_image.width(),
+                            old_image.height(),
+                        ))
+                        .unwrap();
+
+                        let canvas = surface.canvas();
+
+                        canvas.draw_image(&old_image, Point::new(0.0, 0.0), None);
+
+                        canvas.clip_rect(
+                            Rect::new(
+                                pos[0] as scalar,
+                                pos[1] as scalar,
+                                (pos[0] as i32 + delta_image.width()) as scalar,
+                                (pos[1] as i32 + delta_image.height()) as scalar,
+                            ),
+                            ClipOp::default(),
+                            false,
+                        );
+
+                        canvas.clear(Color::TRANSPARENT);
+                        canvas.draw_image(
+                            &delta_image,
+                            Point::new(pos[0] as f32, pos[1] as f32),
+                            None,
+                        );
+
+                        surface.image_snapshot()
+                    }
+                };
+
+                let local_matrix = skia_safe::Matrix::scale((
+                    1.0 / image.width() as f32,
+                    1.0 / image.height() as f32,
+                ));
+
+                let sampling_options = {
+                    use egui::TextureFilter;
+                    let filter_mode = match image_delta.options.magnification {
+                        TextureFilter::Nearest => skia_safe::FilterMode::Nearest,
+                        TextureFilter::Linear => skia_safe::FilterMode::Linear,
+                    };
+                    let mm_mode = match image_delta.options.minification {
+                        TextureFilter::Nearest => skia_safe::MipmapMode::Nearest,
+                        TextureFilter::Linear => skia_safe::MipmapMode::Linear,
+                    };
+
+                    skia_safe::SamplingOptions::new(filter_mode, mm_mode)
+                };
+                let tile_mode = skia_safe::TileMode::Clamp;
+
+                let font_shader = image
+                    .to_shader((tile_mode, tile_mode), sampling_options, &local_matrix)
                     .unwrap();
 
-                    let canvas = surface.canvas();
+                image.width();
 
-                    canvas.draw_image(&old_image, Point::new(0.0, 0.0), None);
+                let mut paint = Paint::default();
+                paint.set_shader(font_shader);
+                paint.set_color(Color::WHITE);
 
-                    canvas.clip_rect(
-                        Rect::new(
-                            pos[0] as scalar,
-                            pos[1] as scalar,
-                            (pos[0] as i32 + delta_image.width()) as scalar,
-                            (pos[1] as i32 + delta_image.height()) as scalar,
-                        ),
-                        ClipOp::default(),
-                        false,
-                    );
-
-                    canvas.clear(Color::TRANSPARENT);
-                    canvas.draw_image(&delta_image, Point::new(pos[0] as f32, pos[1] as f32), None);
-
-                    surface.image_snapshot()
-                }
-            };
-
-            let local_matrix =
-                skia_safe::Matrix::scale((1.0 / image.width() as f32, 1.0 / image.height() as f32));
-
-            let sampling_options = {
-                use egui::TextureFilter;
-                let filter_mode = match image_delta.options.magnification {
-                    TextureFilter::Nearest => skia_safe::FilterMode::Nearest,
-                    TextureFilter::Linear => skia_safe::FilterMode::Linear,
-                };
-                let mm_mode = match image_delta.options.minification {
-                    TextureFilter::Nearest => skia_safe::MipmapMode::Nearest,
-                    TextureFilter::Linear => skia_safe::MipmapMode::Linear,
-                };
-
-                skia_safe::SamplingOptions::new(filter_mode, mm_mode)
-            };
-            let tile_mode = skia_safe::TileMode::Clamp;
-
-            let font_shader = image
-                .to_shader((tile_mode, tile_mode), sampling_options, &local_matrix)
-                .unwrap();
-
-            image.width();
-
-            let mut paint = Paint::default();
-            paint.set_shader(font_shader);
-            paint.set_color(Color::WHITE);
-
-            self.paints.insert(
-                *id,
-                PaintHandle {
-                    paint,
-                    image,
-                },
-            );
-        });
+                self.paints.insert(*id, PaintHandle { paint, image });
+            }
+        }
 
         for primitive in primitives {
             let skclip_rect = Rect::new(
@@ -256,7 +259,8 @@ impl Painter {
                         rect.max.y * dpi,
                     );
 
-                    let mut drawable: Drawable = callback.callback.deref()(skia_rect).0.into_inner();
+                    let mut drawable: Drawable =
+                        callback.callback.deref()(skia_rect).0.into_inner();
 
                     let mut arc = skia_safe::AutoCanvasRestore::guard(canvas, true);
 
@@ -271,6 +275,7 @@ impl Painter {
         textures_delta.free.iter().for_each(|id| {
             self.paints.remove(id);
         });
+        textures_delta.clear();
     }
 }
 
@@ -305,4 +310,3 @@ impl EguiSkiaPaintCallback {
 struct SyncSendableDrawable(pub Sendable<Drawable>);
 
 unsafe impl Sync for SyncSendableDrawable {}
-
