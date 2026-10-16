@@ -13,20 +13,20 @@ opt-level = 3
 
 [dependencies]
 ahash = "0.8.12"
-egui = "0.36.1"
-skia-safe = { version = "0.97", features = [] }
+egui = { version = "0.37.0", features = ["default_fonts", "monochrome_emoji_fonts"] }
+skia-safe = { version = "0.153.3", features = [] }
 
 [dev-dependencies]
 softbuffer = "0.4.8"
-egui_demo_lib = "0.36.1"
+egui_demo_lib = "0.37.0"
 raw-window-handle = "0.6.2"
 foreign-types-shared = "0.3.1"
-egui_extras = { version = "0.36.1", features = ["all_loaders"] }
+egui_extras = { version = "0.37.0", features = ["all_loaders"] }
 image = { version = "0.25.10", features = ["png", "jpeg"] }
 profiling = { version = "1.0.18", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dev-dependencies]
 metal = "0.33.0"
-cocoa = "0.26.1"
+cocoa = "0.27.0"
 core-graphics-types = "0.2.0"
 objc = "0.2"

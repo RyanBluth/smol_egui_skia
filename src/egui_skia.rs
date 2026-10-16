@@ -292,8 +292,30 @@ impl EguiSkia {
     }
 }
 
+impl Drop for EguiSkia {
+    fn drop(&mut self) {
+        // Pending updates are intentionally discarded when the renderer shuts down.
+        self.textures_delta.clear();
+    }
+}
+
 impl Default for EguiSkia {
     fn default() -> Self {
         Self::new(1.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::EguiSkia;
+
+    #[test]
+    fn drop_after_run_without_paint_does_not_panic() {
+        let mut backend = EguiSkia::new(1.0);
+        backend.run_ui(egui::RawInput::default(), |ui| {
+            ui.label("Unpainted frame");
+        });
+
+        drop(backend);
     }
 }
